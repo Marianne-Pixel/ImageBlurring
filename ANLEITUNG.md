@@ -49,8 +49,7 @@ vor dem Start erscheint deshalb eine Sicherheitsabfrage.
 ## Voraussetzungen
 
 - Python 3.9 oder neuer
-- Internetverbindung beim allerersten Start (zum automatischen Download des
-  YOLO11-Segmentierungsmodells `yolo11s-seg.pt`, ca. 20–25 MB)
+
 - Optional: NVIDIA-GPU mit CUDA für deutlich schnellere Verarbeitung
   (funktioniert aber auch ohne GPU, nur langsamer)
 

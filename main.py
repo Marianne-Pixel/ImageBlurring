@@ -449,7 +449,7 @@ class App(tk.Tk):
         if self.detector is None:
             self._set_status("Lade YOLO11-Segmentierungsmodell…")
             #self.detector = PersonDetector(model_path="yolo11s-seg.pt", conf_threshold=0.35)
-            self.detector = PersonDetector(model_path=resource_path("yolo11s-seg.pt"), conf_threshold=0.35)
+            self.detector = PersonDetector(model_path=resource_path("yolo11s-seg.pt"), conf_threshold=0.35) #greift auf die mitgelieferte Datei im Exe-Ordner zu
 
         errors = []
         total_regions = 0

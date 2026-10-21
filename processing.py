@@ -107,8 +107,7 @@ def auto_correct_exposure(
     """
     Hellt Schattenbereiche auf und dunkelt sehr helle Bereiche ab, über
     eine Tonwertkurve auf dem L-Kanal (LAB-Farbraum). Beide Effekte sind
-    unabhängig voneinander über je einen eigenen Regler steuerbar (nicht
-    länger aneinander gekoppelt):
+    unabhängig voneinander über je einen eigenen Regler steuerbar:
 
     shadow_intensity (0..100): Stärke der Schattenaufhellung.
     0 = keine Aufhellung, 100 = maximale Wirkung.

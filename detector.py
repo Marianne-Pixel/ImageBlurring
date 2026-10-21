@@ -4,10 +4,9 @@ Personen-Detektion mit YOLO11-Segmentierung (ultralytics) für:
   - normale (kaum verzerrte) Fotos
   - Equirectangular-Panoramen (z.B. Ricoh Theta Z1)
 
-Es wird ein YOLO11-SEGMENTIERUNGS-Modell verwendet (z.B. yolo11s-seg.pt),
-nicht nur ein reines Detektionsmodell. Dadurch steht pro erkannter Person
-die tatsächliche Silhouette (Polygon) zur Verfügung statt nur einer groben
-Bounding-Box. Das ermöglicht es, beim Verwischen wirklich nur den
+Es wird ein YOLO11-SEGMENTIERUNGS-Modell verwendet (yolo11s-seg.pt),
+Dadurch steht pro erkannter Person die Silhouette (Polygon) zur Verfügung 
+Das ermöglicht es, beim Verwischen nur den
 Personen-Umriss (unregelmässige Form) zu treffen statt grossflächig auch
 den Hintergrund mitzuverwischen.
 

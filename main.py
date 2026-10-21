@@ -29,6 +29,7 @@ Start: python main.py
 """
 
 import os
+import sys
 import threading
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
@@ -37,11 +38,19 @@ import cv2
 import numpy as np
 from PIL import Image, ImageTk
 
+SUPPORTED_EXT = (".jpg", ".jpeg", ".png")
+
+# Ultralytics-Onlineprüfungen (Updates, Downloads) abschalten
+os.environ["YOLO_OFFLINE"] = "True"
+
 from detector import PersonDetector
 from processing import build_mask_from_polygons, blur_mask, count_regions, auto_correct_exposure
 
-SUPPORTED_EXT = (".jpg", ".jpeg", ".png")
 
+def resource_path(name):
+    """Pfad zu mitgelieferten Dateien, funktioniert im Skript und in der Exe."""
+    base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base, name)
 
 class ConfirmDialog(tk.Toplevel):
     """Eigener 3-Knopf-Dialog mit den Beschriftungen 'Ja' / 'Nein' / 'Abbrechen'."""
@@ -439,7 +448,8 @@ class App(tk.Tk):
 
         if self.detector is None:
             self._set_status("Lade YOLO11-Segmentierungsmodell…")
-            self.detector = PersonDetector(model_path="yolo11s-seg.pt", conf_threshold=0.35)
+            #self.detector = PersonDetector(model_path="yolo11s-seg.pt", conf_threshold=0.35)
+            self.detector = PersonDetector(model_path=resource_path("yolo11s-seg.pt"), conf_threshold=0.35)
 
         errors = []
         total_regions = 0

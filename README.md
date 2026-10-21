@@ -16,10 +16,8 @@ cd personen_anonymisierer
 pip install -r requirements.txt
 ```
 
-Beim ersten Start wird das YOLO11-Segmentierungsmodell (`yolo11s-seg.pt`)
-automatisch von Ultralytics heruntergeladen — dafür ist beim ersten Mal eine
-Internetverbindung nötig. Danach liegt die Datei lokal und wird
-wiederverwendet.
+Das YOLO11-Segmentierungsmodell (`yolo11s-seg.pt`) wurde am 20.10.2026 von Ultralytics heruntergeladen.
+Die Datei liegt lokal und wird beim Ausführen des Tools verwendet.
 
 Falls eine NVIDIA-GPU mit CUDA vorhanden ist, nutzt `ultralytics`
 automatisch die GPU (deutlich schneller). Ohne GPU läuft es auch auf der

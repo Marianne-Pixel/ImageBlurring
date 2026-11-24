@@ -6,11 +6,14 @@ readme = "README.md"
 authors = [
     { name = "Marianne Gertsch", email = "m.gertsch@terradata.ch" }
 ]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "numpy>=1.26.0",
     "opencv-python>=4.9.0",
+    "openvino>=2024.0",
     "pillow>=10.0.0",
+    "torch==2.14.1",
+    "torchvision>=0.29.1",
     "ultralytics>=8.3.0",
 ]
 
@@ -20,3 +23,17 @@ imageblurring-yolo11 = "imageblurring_yolo11:main"
 [build-system]
 requires = ["uv_build>=0.12.5,<0.13.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.22.3",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu132"
+url = "https://download.pytorch.org/whl/cu132"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu132" }
+torchvision = { index = "pytorch-cu132" }

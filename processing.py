@@ -3,7 +3,8 @@ processing.py
 Bildbearbeitung:
   - Zwei wählbare Verwisch-Methoden ("gaussian" / "pixelate"), angewendet
     auf eine Maske, die exakt der Silhouette jeder erkannten Person
-    entspricht (kein Rechteck oder Oval).
+    entspricht (kein Rechteck oder Oval). Die Stärke wird optional an die
+    Grösse jeder einzelnen Person angepasst.
   - Zählen der verwischten Bereiche (für die Abschluss-Statistik im GUI).
   - Automatische Belichtungskorrektur: hellt Schatten auf und dunkelt
     Lichter ab (Tonwertkurve auf dem L-Kanal, LAB-Farbraum), mit zwei
@@ -33,6 +34,30 @@ def _pixel_block_from_strength(strength):
     return max(2, int(round(strength)))
 
 
+# Grösse (in Pixeln, max. von Breite/Höhe) einer Personen-Region, bei der
+# die eingestellte Stärke 1:1 gilt. Entspricht etwa der Silhouette im
+# fiktiven Beispielbild der GUI-Vorschau, damit die Vorschau repräsentativ ist.
+REFERENCE_REGION_SIZE = 128
+
+# Ab dieser Kernelgrösse wird der Gaussian Blur auf einer verkleinerten
+# Kopie berechnet (gleiches Ergebnis, aber um Grössenordnungen schneller).
+_MAX_DIRECT_KERNEL = 61
+
+
+def effective_strength(strength, region_size, relative=True):
+    """
+    Skaliert die eingestellte Stärke mit der Grösse der Personen-Region.
+    Eine Person, die 4x so gross abgebildet ist wie die Referenz, wird
+    4x so stark verwischt, damit z.B. Gesichter unabhängig von Distanz
+    und Bildauflösung gleich unkenntlich werden. Die eingestellte Stärke
+    gilt dabei als Untergrenze (kleine Personen werden nie schwächer
+    verwischt als bisher).
+    """
+    if not relative:
+        return float(strength)
+    return max(float(strength), float(strength) * region_size / REFERENCE_REGION_SIZE)
+
+
 def apply_blur_effect(roi, method="gaussian", strength=12):
     """Wendet die gewählte Verwisch-Methode auf einen Bildausschnitt an."""
     h, w = roi.shape[:2]
@@ -44,9 +69,21 @@ def apply_blur_effect(roi, method="gaussian", strength=12):
         small_h = max(1, h // block)
         small = cv2.resize(roi, (small_w, small_h), interpolation=cv2.INTER_LINEAR)
         return cv2.resize(small, (w, h), interpolation=cv2.INTER_NEAREST)
-    else:  # "gaussian" (Standard)
-        k = _gaussian_kernel_from_strength(strength, max_dim=min(h, w))
+
+    # "gaussian" (Standard)
+    k = _gaussian_kernel_from_strength(strength, max_dim=min(h, w))
+    if k <= _MAX_DIRECT_KERNEL:
         return cv2.GaussianBlur(roi, (k, k), 0)
+    # Sehr grosse Kernel: verkleinern, mit entsprechend kleinerem Kernel
+    # verwischen und wieder vergrössern.
+    scale = k / _MAX_DIRECT_KERNEL
+    small_w = max(1, int(round(w / scale)))
+    small_h = max(1, int(round(h / scale)))
+    small = cv2.resize(roi, (small_w, small_h), interpolation=cv2.INTER_AREA)
+    k_small = _gaussian_kernel_from_strength((_MAX_DIRECT_KERNEL - 1) / 2,
+                                             max_dim=min(small_h, small_w))
+    small = cv2.GaussianBlur(small, (k_small, k_small), 0)
+    return cv2.resize(small, (w, h), interpolation=cv2.INTER_LINEAR)
 
 
 def build_mask_from_polygons(img_shape, polygons, margin_px=None):
@@ -71,21 +108,52 @@ def build_mask_from_polygons(img_shape, polygons, margin_px=None):
     return mask
 
 
-def blur_mask(img_bgr, mask, method="gaussian", strength=18):
+def blur_mask(img_bgr, mask, method="gaussian", strength=18, relative_strength=True):
     """
     Wendet die gewählte Verwisch-Methode auf alle Pixel an, die in der
     Maske gesetzt sind (Personen-Silhouette(n) bzw. Panorama-Maske aus
     detector.detect_mask_equirect). Der Übergang am Maskenrand wird sanft
     ausgeblendet, damit keine harte Kante entsteht.
+
+    Jeder zusammenhängende Bereich der Maske wird einzeln bearbeitet. Mit
+    relative_strength=True wird die Stärke an die Grösse des Bereichs
+    angepasst (siehe effective_strength), sodass nahe/grosse Personen
+    entsprechend stärker verwischt werden als weit entfernte.
     """
     if mask is None or not np.any(mask):
         return img_bgr.copy()
 
-    effect_full = apply_blur_effect(img_bgr, method=method, strength=strength)
-    feather = max(3, (max(img_bgr.shape[:2]) // 150) | 1)
-    soft_mask = cv2.GaussianBlur(mask, (feather, feather), 0).astype(np.float32) / 255.0
-    soft_mask3 = soft_mask[..., None]
-    out = (effect_full * soft_mask3 + img_bgr * (1 - soft_mask3)).astype(np.uint8)
+    img_h, img_w = img_bgr.shape[:2]
+    out = img_bgr.copy()
+    feather = max(3, (max(img_h, img_w) // 150) | 1)
+
+    num, labels, stats, _ = cv2.connectedComponentsWithStats(
+        (mask > 0).astype(np.uint8), connectivity=8
+    )
+    for i in range(1, num):
+        x, y, w, h = stats[i, :4]
+        eff = effective_strength(strength, max(w, h), relative_strength)
+
+        # Ausschnitt so weit vergrössern, dass der Effekt auch am Rand der
+        # Silhouette genügend Umgebungspixel hat (Kernel-Radius + Feather).
+        if method == "pixelate":
+            reach = _pixel_block_from_strength(eff)
+        else:
+            reach = int(round(eff)) + 1
+        pad = reach + feather + 2
+        x0, y0 = max(0, x - pad), max(0, y - pad)
+        x1, y1 = min(img_w, x + w + pad), min(img_h, y + h + pad)
+
+        roi = img_bgr[y0:y1, x0:x1]
+        comp = (labels[y0:y1, x0:x1] == i).astype(np.uint8) * 255
+        soft = cv2.GaussianBlur(comp, (feather, feather), 0).astype(np.float32) / 255.0
+        soft3 = soft[..., None]
+
+        effect = apply_blur_effect(roi, method=method, strength=eff)
+        out_roi = out[y0:y1, x0:x1].astype(np.float32)
+        blended = effect.astype(np.float32) * soft3 + out_roi * (1.0 - soft3)
+        out[y0:y1, x0:x1] = np.clip(blended, 0, 255).astype(np.uint8)
+
     return out
 
 

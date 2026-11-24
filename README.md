@@ -1,34 +1,29 @@
-# Personen-Anonymisierung (Theta Z1, Fisheye & normale Bilder)
+# Person Anonymization (Equirectangular Panos, Fisheye & Regular Images)
 
-Tool zum automatischen Unkenntlichmachen von Personen in Bildern mittels
-YOLO11-Segmentierung und wählbarem Verwisch-Effekt (Gaussian Blur oder
-Pixelierung). Unterstützt normale, kaum verzerrte Fotos,
-Equirectangular-Panoramen der Ricoh Theta Z1 sowie Fisheye-Bilder
-(zirkularer Bildkreis). Die bearbeiteten Bilder
-werden standardmässig an einem frei wählbaren Speicherort abgelegt, die
-Originale bleiben unverändert. Optional können die Originale direkt
-überschrieben werden (Checkbox "Bilder im Quellordner ersetzen").
+Tool for automatically obscuring people in images using YOLO11
+segmentation and a selectable blur effect (Gaussian blur or pixelation).
+Supports regular, barely distorted photos, equirectangular panoramas and
+fisheye images (circular image area). By default, the processed images are
+saved to a freely selectable location and the originals remain unchanged.
+Optionally, the originals can be overwritten directly.
 
 ## Installation
 
-Python 3.9+ empfohlen.
+Python 3.12 recommended.
 
 ```bash
 cd personen_anonymisierer
 pip install -r requirements.txt
 ```
 
-Das YOLO11-Segmentierungsmodell (`yolo11s-seg.pt`) wurde am 20.10.2026 von Ultralytics heruntergeladen.
-Die Datei liegt lokal und wird beim Ausführen des Tools verwendet.
+The tool automatically selects the fastest available compute backend: an
+NVIDIA GPU with CUDA (half precision), otherwise OpenVINO on the CPU (about
+2.5 times faster than PyTorch, package `openvino` in `requirements.txt`),
+otherwise PyTorch on the CPU. On the very first start without a GPU, the
+model is converted once for this purpose, which takes a few seconds.
 
-Das Tool wählt das schnellste verfügbare Rechenwerk automatisch: eine
-NVIDIA-GPU mit CUDA (halbe Genauigkeit), sonst OpenVINO auf der CPU (etwa
-2.5-mal schneller als PyTorch, Paket `openvino` in `requirements.txt`),
-sonst PyTorch auf der CPU. Beim allerersten Start ohne GPU wird das Modell
-dafür einmalig in wenigen Sekunden umgewandelt.
-
-Für eine NVIDIA-GPU muss PyTorch mit CUDA installiert sein (unter Windows
-installiert `pip` standardmässig die CPU-Version), siehe
+To use an NVIDIA GPU, PyTorch with CUDA must be installed (on Windows, `pip`
+installs the CPU version by default), see
 [ANLEITUNG.md](ANLEITUNG.md#nvidia-gpu-nutzen).
 
 ## Start
@@ -37,114 +32,112 @@ installiert `pip` standardmässig die CPU-Version), siehe
 python main.py
 ```
 
-Als Exe: `pyinstaller ImageBlurring_YOLO11.spec` erzeugt den Ordner
-`dist\ImageBlurring_YOLO11\` (ganzen Ordner weitergeben), Details siehe
+As an exe: `pyinstaller ImageBlurring_YOLO11.spec` creates the folder
+`dist\ImageBlurring_YOLO11\` (distribute the entire folder). For details see
 [ANLEITUNG.md](ANLEITUNG.md#exe-erstellen-pyinstaller).
 
-## Bedienung
+## Usage
 
-Auf kleinen Bildschirmen das Fenster einfach verkleinern: Es erscheinen
-Scrollbalken (auch Mausrad), der "Start"-Knopf bleibt unten immer sichtbar.
+On small screens, simply shrink the window: scroll bars appear (mouse wheel
+works too), and the "Start" button always stays visible at the bottom.
 
-1. **Durchsuchen…** (bei "Ordner") klicken und den Ordner mit den
-   Quellbildern auswählen. Der Ordner wird (inkl. Unterordner) nach `.jpg`,
-   `.jpeg` und `.png` durchsucht.
-2. **Durchsuchen…** (bei "Speicherort") klicken und den Ordner auswählen,
-   in dem die bearbeiteten Bilder gespeichert werden sollen. Die
-   Unterordner-Struktur des Quellordners wird dabei am Speicherort
-   nachgebildet. Alternativ die Checkbox **"Bilder im Quellordner ersetzen"**
-   aktivieren (Standard: aus): Dann werden die Originalbilder ersetzt und
-   kein Speicherort benötigt.
-3. In der Liste die gewünschten Bilder auswählen (Mehrfachauswahl mit
-   `Strg`/`Shift`-Klick, oder "Alle auswählen"). Über "Sortieren nach"
-   lässt sich die Liste nach Name oder Bildgrösse ordnen. Bei Auswahl eines einzelnen
-   Bildes erscheint rechts daneben eine kleine Vorschau.
-4. Unter **"Verwisch-Einstellungen"** die Methode wählen (**Gaussian Blur**
-   oder **Pixelieren/Mosaik**) und die Stärke per Regler einstellen. Die
-   Vorschau rechts zeigt den Effekt live an einem kleinen, fiktiven
-   Beispielbild.
-5. Unter **"Belichtungskorrektur"** die Korrektur aktivieren und die
-   beiden unabhängigen Regler **"Schatten aufhellen"** und
-   **"Lichter abdunkeln"** (je 0–100) einstellen: 0 = kein Effekt,
-   100 = maximale Wirkung. Die Regler wirken unabhängig voneinander.
-6. Unter **"Bildtyp"** per Radio-Button **Equirectangular** (Standard),
-   **Fisheye** oder **Normale Perspektive** wählen.
-7. Unter **"Metadaten (nur JPEG)"** festlegen, ob EXIF/XMP/Farbprofil
-   übernommen werden (Standard: ja, nötig für die 360°-Darstellung) und
-   ob die GPS-Position entfernt werden soll (Standard: nein).
-8. **Start** klicken. Es erscheint eine Sicherheitsabfrage mit der Anzahl
-   der ausgewählten Bilder ("Es werden X Bild(er) bearbeitet."), da
-   gleichnamige Dateien im Speicherort überschrieben werden ("Ja" =
-   starten, "Nein"/"Abbrechen" = abbrechen).
-9. Fortschritt wird unten angezeigt, darunter eine Zeitabschätzung
-   (verstrichene Zeit, Restzeit, voraussichtliches Ende); am Ende erscheint eine
-   Zusammenfassung (verwischte Bereiche/Bilder, Anzahl auf-/abgehellter
-   Bilder, inkl. eventueller Fehler pro Bild).
+1. Click **Durchsuchen…** (next to "Ordner") and select the folder containing the
+   source images. The folder is searched (including subfolders) for `.jpg`,
+   `.jpeg` and `.png` files.
+2. Click **Durchsuchen…** (next to "Speicherort") and select the folder where
+   the processed images should be saved. The subfolder structure of the
+   source folder is recreated at the output location. Alternatively, enable
+   the checkbox **"Bilder im Quellordner ersetzen"** (default: off): the
+   original images are then replaced and no output location is needed.
+3. Select the desired images in the list (multiple selection with
+   `Ctrl`/`Shift` click, or "Alle auswählen"). The "Sortieren nach" option orders the
+   list by name or image size. When a single image is selected, a small
+   preview appears next to the list.
+4. Under **"Verwisch-Einstellungen"**, choose the method (**Gaussian Blur** or
+   **Pixelieren/Mosaik**) and set the strength with the slider. The preview on
+   the right shows the effect live on a small, fictitious sample image.
+5. Under **"Belichtungskorrektur"**, enable the correction and set the two
+   independent sliders **"Schatten aufhellen"** and **"Lichter abdunkeln"**
+   (0–100 each): 0 = no effect, 100 = maximum effect. The sliders act
+   independently of each other.
+6. Under **"Bildtyp"**, choose **Equirectangular** (default),
+   **Fisheye** or **Normale Perspektive** via radio button.
+7. Under **"Metadaten (nur JPEG)"**, specify whether EXIF/XMP/color profile
+   are preserved (default: yes, required for 360° display) and whether the
+   GPS position should be removed (default: no).
+8. Click **Start**. A confirmation prompt appears showing the number of
+   selected images ("Es werden X Bild(er) bearbeitet."), since files with the
+   same name at the output location will be overwritten ("Ja" = start,
+   "Nein"/"Abbrechen" = abort).
+9. Progress is shown at the bottom, followed by a time estimate (elapsed
+   time, remaining time, expected finish); at the end a summary appears
+   (blurred areas/images, number of brightened/darkened images, including
+   any errors per image).
 
-## Funktionsweise
+## How It Works
 
-### Personendetektion
-Beide Bildarten nutzen dieselbe YOLO11-**Segmentierung** (nicht nur eine
-Bounding-Box) über `PersonDetector.detect_masks_normal()` in `detector.py`.
-Dadurch steht pro erkannter Person die tatsächliche Silhouette zur
-Verfügung, und es wird beim Verwischen nur diese unregelmässige Form
-getroffen — nicht ein Rechteck oder Oval, das unnötig viel Hintergrund
-mitverwischen würde.
+### Person Detection
+Both image types use the same YOLO11 **segmentation** (not just a bounding
+box) via `PersonDetector.detect_masks_normal()` in `detector.py`. This
+provides the actual silhouette of each detected person, so that only this
+irregular shape is blurred — not a rectangle or oval that would needlessly
+blur a lot of background as well.
 
-### Normale Bilder
-`processing.build_mask_from_polygons()` erzeugt aus den erkannten
-Silhouetten eine Maske mit nur wenigen Pixeln Sicherheitsrand;
-`processing.blur_mask()` wendet darauf die gewählte Methode
-(**Gaussian Blur** oder **Pixelieren/Mosaik**, mit im GUI einstellbarer
-Stärke) an, mit weichem Übergang am Rand. Standardmässig wird die Stärke
-pro Person an deren Grösse angepasst, damit auch nahe, grosse Personen
-zuverlässig unkenntlich werden.
+### Regular Images
+`processing.build_mask_from_polygons()` creates a mask from the detected
+silhouettes with only a few pixels of safety margin;
+`processing.blur_mask()` applies the selected method (**Gaussian blur** or
+**Pixelate/Mosaic**, with strength adjustable in the GUI) to it, with a soft
+transition at the edge. By default, the strength is adapted to the size of
+each person, so that even close, large people are reliably made
+unrecognizable.
 
-### Equirectangular-Bilder (Theta Z1)
-Wie zuvor: Panorama in überlappende Tiles zerlegen, Segmentierung pro Tile,
-Silhouetten zurück ins Panorama-Koordinatensystem projizieren, dann
-Verwischen über die resultierende Maske.
+### Equirectangular Images (Theta Z1)
+As before: split the panorama into overlapping tiles, segment each tile,
+project the silhouettes back into the panorama coordinate system, then blur
+using the resulting mask.
 
-### Fisheye-Bilder
-Analog zu den Panoramen: Bildkreis in 9 überlappende, entzerrte Tiles
-schneiden, alle Tiles in 0°/90° segmentieren und Tiles mit Treffern
-zusätzlich in 180°/270° (für gedreht montierte Kameras), Silhouetten exakt ins Fisheye-Bild zurückprojizieren.
-Bildwinkel (Standard 200°) und Abbildungsfunktion (Standard
-equidistant) lassen sich oben in `detector.py` anpassen.
+### Fisheye Images
+Analogous to panoramas: cut the image circle into 9 overlapping, undistorted
+tiles, segment all tiles at 0°/90°, and additionally segment tiles with hits
+at 180°/270° (for cameras mounted rotated), and project the silhouettes
+exactly back into the fisheye image. The field of view (default 200°) and
+the projection function (default equidistant) can be adjusted at the top of
+`detector.py`.
 
-### Belichtungskorrektur
-Tonwertkurve auf dem L-Kanal (Helligkeit) im LAB-Farbraum: Schatten werden
-angehoben, sehr helle Bereiche komprimiert. Zwei **unabhängige** Regler im
-GUI — **"Schatten aufhellen"** und **"Lichter abdunkeln"** (je 0–100) —
-steuern die beiden Effekte getrennt voneinander. Eine Sicherheitsprüfung
-verhindert, dass das Bild dadurch insgesamt zu hell wird.
+### Exposure Correction
+Tone curve on the L channel (lightness) in the LAB color space: shadows are
+lifted, very bright areas are compressed. Two **independent** sliders in the
+GUI — **"Schatten aufhellen"** and **"Lichter abdunkeln"** (0–100 each) —
+control the two effects separately. A safety check prevents the image from
+becoming too bright overall as a result.
 
-### Abschluss-Statistik
-Nach der Verarbeitung zeigt das GUI eine Zusammenfassung: Anzahl verwischter
-Bereiche und Anzahl betroffener Bilder, sowie (falls aktiviert) wie viele
-Bilder auf- bzw. abgehellt wurden.
+### Final Statistics
+After processing, the GUI shows a summary: number of blurred areas and
+number of affected images, as well as (if enabled) how many images were
+brightened or darkened.
 
-Details siehe [ANLEITUNG.md](ANLEITUNG.md).
+For details see [ANLEITUNG.md](ANLEITUNG.md).
 
-### Metadaten
-Bei JPEG werden EXIF, XMP (inkl. der 360°-Angaben der Theta Z1) und das
-Farbprofil übernommen. Eingebettete Vorschaubilder werden immer entfernt,
-da sie die Personen unverwischt zeigen würden. Optional lässt sich die
-GPS-Position entfernen.
+### Metadata
+For JPEG, EXIF, XMP (including the 360° information of the Theta Z1) and the
+color profile are preserved. Embedded thumbnails are always removed, as they
+would show the people unblurred. Optionally, the GPS position can be
+removed.
 
-Die Bildgeometrie bleibt unverändert: Hochformat-Fotos, die die Kamera
-quer mit EXIF-Tag "Orientation" speichert, werden auch quer mit demselben
-Tag gespeichert. So erhalten Programme wie RiSCAN dieselbe Geometrie wie
-beim Original.
+The image geometry remains unchanged: portrait photos that the camera stores
+in landscape orientation with the EXIF tag "Orientation" are also saved in
+landscape with the same tag. This way, programs such as RiSCAN get the same
+geometry as with the original.
 
-## Hinweis
+## Note
 
-Standardmässig werden die Originaldateien **nicht verändert**. Die
-bearbeiteten Bilder werden unter dem gewählten Speicherort abgelegt (mit
-derselben relativen Unterordner-Struktur wie im Quellordner). Sind dort
-bereits Dateien mit gleichem Namen vorhanden, werden diese überschrieben.
+By default, the original files are **not modified**. The processed images
+are saved under the selected output location (with the same relative
+subfolder structure as in the source folder). If files with the same name
+already exist there, they will be overwritten.
 
-Mit **"Bilder im Quellordner ersetzen"** werden die Originale ersetzt (nicht
-rückgängig zu machen). Jedes Bild wird zuerst in eine temporäre Datei
-geschrieben und ersetzt das Original erst nach fehlerfreiem Speichern.
-Bilder ohne erkannte Person bleiben dabei unangetastet.
+With **"Bilder im Quellordner ersetzen"**, the originals are replaced
+(cannot be undone). Each image is first written to a temporary file and
+replaces the original only after it has been saved without errors. Images
+without a detected person remain untouched.

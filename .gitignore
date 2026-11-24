@@ -27,6 +27,7 @@ share/python-wheels/
 MANIFEST
 BLUEPRINT.md
 README_DE.md
+ANLEITUNG.md
 
 # YOLO11 
 yolo11s-seg.pt
